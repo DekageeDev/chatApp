@@ -1,0 +1,1 @@
+ /Users/davidcanetegarcia/Desktop/carpeta\ sin\ título\ 2/chatApp/.dart_tool/flutter_build/1e0ea77e8e710395e66d144273986705/native_assets.yaml: 
