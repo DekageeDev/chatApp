@@ -56,23 +56,37 @@ Future<String> getOrCreateConversationId(String senderId, String receiverId) asy
 
 Future<String?> getConversationIdFromUser(String userId, String otherUserId) async {
   try {
-    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(userId)
+    // Formar el nombre del documento de la conversación para ambos casos posibles
+    String conversationDocName1 = '$userId' + '_' + '$otherUserId';
+    String conversationDocName2 = '$otherUserId' + '_' + '$userId';
+
+    // Consultar el documento de la conversación formado por userId y otherUserId
+    DocumentSnapshot<Map<String, dynamic>> snapshot1 = await FirebaseFirestore.instance
       .collection('conversations')
-      .doc(otherUserId)
+      .doc(conversationDocName1)
       .get();
 
-    if (snapshot.exists) {
-      return snapshot.data()?['conversationId'];
-    } else {
-      return null;
+    if (snapshot1.exists) {
+      return conversationDocName1; // Devolver el nombre del documento de la conversación
     }
+
+    // Consultar el documento de la conversación formado por otherUserId y userId
+    DocumentSnapshot<Map<String, dynamic>> snapshot2 = await FirebaseFirestore.instance
+      .collection('conversations')
+      .doc(conversationDocName2)
+      .get();
+
+    if (snapshot2.exists) {
+      return conversationDocName2; // Devolver el nombre del documento de la conversación
+    }
+
+    return null;
   } catch (error) {
-    print('Error al obtener el conversationId del usuario: $error');
+    print('Error al obtener el ID de conversación del usuario: $error');
     return null;
   }
 }
+
 
 Future<String> createNewConversation(String senderId, String receiverId) async {
   try {
@@ -101,7 +115,7 @@ Future<String> createNewConversation(String senderId, String receiverId) async {
 Future<void> updateConversationIdInUser(String userId, String otherUserId, String conversationId) async {
   try {
     await FirebaseFirestore.instance
-      .collection('users')
+      .collection('user')
       .doc(userId)
       .collection('conversations')
       .doc(otherUserId)
