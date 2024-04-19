@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:yes_no_app/config/firebase/user_config.dart';
 import 'package:yes_no_app/presentation/screens/addFriend/user_addFriend.dart';
 import 'package:yes_no_app/presentation/screens/chat/chat_screen.dart';
+import 'package:yes_no_app/presentation/screens/register/login_register_page.dart';
 import 'package:yes_no_app/services/auth.dart';
 import 'package:yes_no_app/services/firebase_service.dart';
 
@@ -29,7 +31,7 @@ class _GetUserListState extends State<GetUserList> {
             if (snapshot.data == true) { // Si el usuario está logueado
               return _buildUserList(); // Muestra la lista de usuarios
             } else { // Si el usuario no está logueado
-              return _buildSignInScreen(); // Redirige al usuario a la pantalla de inicio de sesión
+              return UserConfig(); // Redirige al usuario a la pantalla de inicio de sesión
             }
           } else {
             return Center(child: CircularProgressIndicator());
