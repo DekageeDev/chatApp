@@ -6,22 +6,15 @@ import 'package:yes_no_app/services/auth.dart';
 import 'package:yes_no_app/services/firebase_service.dart';
 
 class GetUserList extends StatefulWidget {
-  GetUserList({super.key});
+  GetUserList({Key? key}) : super(key: key);
 
   @override
-  State<GetUserList> createState() => _getUser();
-
-  Future<void> signOut() async {
-    await Auth().signOut();
-
-    Widget _signOutButton() {
-      return ElevatedButton(onPressed: signOut, child: const Text('Sign Out'));
-    }
-  }
+  _GetUserListState createState() => _GetUserListState();
 }
 
-class _getUser extends State<GetUserList> {
+class _GetUserListState extends State<GetUserList> {
   final User? user = Auth().currentUser;
+
   Future<void> signOut() async {
     await Auth().signOut();
   }
@@ -29,95 +22,131 @@ class _getUser extends State<GetUserList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blueGrey[600],
-          title: Text(
-            'Bienvenido, ${user?.email}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600, // Texto en negrita
-            ),
+      body: FutureBuilder(
+        future: Auth().isUserAuthenticated(), // Suponiendo que tienes un método para verificar si el usuario está logueado
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.data == true) { // Si el usuario está logueado
+              return _buildUserList(); // Muestra la lista de usuarios
+            } else { // Si el usuario no está logueado
+              return _buildSignInScreen(); // Redirige al usuario a la pantalla de inicio de sesión
+            }
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildUserList() {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blueGrey[600],
+        title: Text(
+          'Bienvenido, ${user?.email}',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
           ),
         ),
-        body: FutureBuilder(
-            future: getUserFriendList(user?.email),
-            builder: ((context, snapshot) {
-              if (snapshot.hasData) {
-                return ListView.separated(
-                  itemCount: snapshot.data?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(
-                        "${snapshot.data?[index]['name']}",
-                        style: const TextStyle(
-                          fontSize: 18, // Tamaño de fuente aumentado
-                          fontWeight: FontWeight.w500, // Texto en negrita
+      ),
+      body: FutureBuilder(
+        future: getUserFriendList(user?.email),
+        builder: ((context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.separated(
+              itemCount: snapshot.data?.length ?? 0,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                    "${snapshot.data?[index]['name']}",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  tileColor: Colors.blueGrey[400],
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          name: snapshot.data?[index]['name'],
+                          email: snapshot.data?[index]['email'],
+                          imageURL: snapshot.data?[index]['imageURL'],
                         ),
                       ),
-                      tileColor: Colors.blueGrey[400],
-                      onTap: () {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ChatScreen(
-                                    name: snapshot.data?[index]['name'],
-                                    email: snapshot.data?[index]['email'],
-                                    imageURL: snapshot.data?[index]['imageURL'],
-                                  )),
-                          (route) => false,
-                        );
-                      },
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                            25), // Puedes ajustar el radio según tus necesidades
-                        child: Image.network(
-                          snapshot.data?[index]['imageURL'],
-                          height: 45,
-                          width: 45,
-                          fit: BoxFit
-                              .cover, // Para asegurarte de que la imagen se ajuste correctamente al radio del borde
-                        ),
-                      ),
-                      //trailing: const Icon(Icons.menu),
+                      (route) => false,
                     );
                   },
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 7.5),
-                );
-              } else {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-            })),
-        bottomNavigationBar: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => UserAddFriend()),
-                        (route) => false,
-                      );
-                    },
-                    child: Text('Añadir Amigo'),
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: Image.network(
+                      snapshot.data?[index]['imageURL'],
+                      height: 45,
+                      width: 45,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: signOut,
-                    child: Text('Cerrar sesión'),
+                );
+              },
+              separatorBuilder: (context, index) => const SizedBox(height: 7.5),
+            );
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        }),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserAddFriend(),
                   ),
-                ])));
+                  (route) => false,
+                );
+              },
+              child: const Text('Añadir Amigo'),
+            ),
+            ElevatedButton(
+              onPressed: signOut,
+              child: const Text('Cerrar sesión'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignInScreen() {
+    // Aquí puedes redirigir al usuario a la pantalla de inicio de sesión
+    // o mostrar un mensaje para iniciar sesión
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Inicia sesión para continuar'),
+          ElevatedButton(
+            onPressed: () {
+              // Redirige al usuario a la pantalla de inicio de sesión
+              // Puedes implementar tu lógica de inicio de sesión aquí
+            },
+            child: const Text('Iniciar sesión'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-@override
-State<StatefulWidget> createState() {
-  // TODO: implement createState
-  throw UnimplementedError();
-}
 
 
 /* FutureBuilder(

@@ -15,6 +15,12 @@ class Auth {
         email: email, password: password);
   }
 
+  Future<bool> isUserAuthenticated() async {
+  final user = FirebaseAuth.instance.currentUser;
+  return user != null;
+}
+
+
   Future<void> createUserWithEmailAndPassword(
       {required String email, required String password}) async {
     await _firebaseAuth.createUserWithEmailAndPassword(

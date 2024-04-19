@@ -1,0 +1,1 @@
+ /Users/davidcanetegarcia/Desktop/eskete/chatApp/.dart_tool/flutter_build/f1eaf45bbba4aacb1a473c9bec9d9451/native_assets.yaml: 
