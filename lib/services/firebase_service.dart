@@ -45,20 +45,41 @@ Future<List<Map<String, dynamic>>> getUserFriendList(String? email) async {
   CollectionReference collectionReferenceUserConnection =
       db.collection('userConnection');
 
+  // Consultar documentos donde email1 o email2 coincidan con el email y ambos estén aceptados
   final QuerySnapshot querySnapshot = await collectionReferenceUserConnection
       .where('email1', isEqualTo: email)
+      .where('email1Accepted', isEqualTo: true)
+      .where('email2Accepted', isEqualTo: true)
       .get();
 
-  for (var documento in querySnapshot.docs) {
-    final String user2Email = documento['email2'];
+  final QuerySnapshot querySnapshot2 = await collectionReferenceUserConnection
+      .where('email2', isEqualTo: email)
+      .where('email1Accepted', isEqualTo: true)
+      .where('email2Accepted', isEqualTo: true)
+      .get();
+
+  // Combinar los resultados de las dos consultas
+  List<QueryDocumentSnapshot> allDocs = [...querySnapshot.docs, ...querySnapshot2.docs];
+
+  for (var documento in allDocs) {
+    String user2Email;
+
+    if (documento['email1'] == email) {
+      user2Email = documento['email2'];
+    } else {
+      user2Email = documento['email1'];
+    }
+
     // Consultar los datos del usuario en la colección 'user' filtrando por el email2
     final userQuerySnapshot =
         await db.collection('user').where('email', isEqualTo: user2Email).get();
 
-    // Agregar los datos del usuario a la lista de usuarios
-    userQuerySnapshot.docs.forEach((userDoc) {
-      userList.add(userDoc.data());
-    });
+    if (userQuerySnapshot.docs.isNotEmpty) {
+      // Agregar los datos del usuario a la lista de usuarios
+      userQuerySnapshot.docs.forEach((userDoc) {
+        userList.add(userDoc.data());
+      });
+    }
   }
 
   return userList;
@@ -78,15 +99,57 @@ Future<void> addFriend(String? email11, String? email12) async {
   await db.collection("userConnection").add({
     "email1": email11,
     "email2": email12,
+    "email1Accepted": true,
+    "email2Accepted": false
   });
+}
+
+Future<List<Map<String, dynamic>>> getUserInfoByEmail(String email) async {
+  List<Map<String, dynamic>> userInfoList = [];
+
+  try {
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+        .collection('user')
+        .where('email', isEqualTo: email)
+        .get();
+
+    querySnapshot.docs.forEach((doc) {
+      userInfoList.add(doc.data());
+    });
+
+    return userInfoList;
+  } catch (e) {
+    print('Error fetching user info: $e');
+    return [];
+  }
+}
+
+
+//Recogemos la peticion de amistad
+Future<List<String>> getFriendRequests(String myEmail) async {
+  List<String> friendRequestsList = [];
+
+  try {
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+        .collection('userConnection')
+        .where('email2', isEqualTo: myEmail)
+        .where('email2Accepted', isEqualTo: false)
+        .get();
+
+    querySnapshot.docs.forEach((doc) {
+      friendRequestsList.add(doc['email1']);
+    });
+
+    return friendRequestsList;
+  } catch (e) {
+    print('Error fetching friend requests: $e');
+    return [];
+  }
 }
 
 Future<void> createTwoFriendRecords(String? email1, String? email2) async {
   // Llamada a la función addFriend con valores proporcionados
   await addFriend(email1, email2);
-
-  // Llamada a la función addFriend con correos electrónicos hardcodeados
-  await addFriend(email2, email1);
 }
 
 Future<bool> getUserName(String? name) async {

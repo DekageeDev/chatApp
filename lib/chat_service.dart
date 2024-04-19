@@ -25,7 +25,7 @@ Future<void> insertFirstMessage(
   });
 }
 
-Future<String> getUserIdFromEmail(String email) async {
+Future<String> getUserIdFromEmail(String? email) async {
   QuerySnapshot snapshot = await FirebaseFirestore.instance
       .collection('user')
       .where('email', isEqualTo: email)

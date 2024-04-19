@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class Auth {
@@ -29,5 +30,21 @@ class Auth {
 
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
+  }
+
+  // Suponiendo que tienes un método para obtener el nombre del usuario por ID
+  Future<String?> getUserNameById(String? userId) async {
+    // Aquí iría tu lógica para obtener el nombre del usuario desde Firestore o donde lo almacenes
+    if (userId != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('user')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        return userDoc['name']; // Suponiendo que el campo se llama 'name'
+      }
+    }
+    return null;
   }
 }
