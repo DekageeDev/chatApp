@@ -9,6 +9,8 @@ import 'package:yes_no_app/presentation/screens/register/login_register_page.dar
 import 'package:yes_no_app/services/auth.dart';
 import 'package:yes_no_app/services/firebase_service.dart';
 
+import 'package:flutter/material.dart';
+
 class GetUserList extends StatefulWidget {
   GetUserList({Key? key}) : super(key: key);
 
@@ -31,18 +33,19 @@ class _GetUserListState extends State<GetUserList> {
   _loadUserName() async {
     if (user != null) {
       String? userId = await getUserIdFromEmail(user?.email);
-      String? userName = await Auth().getUserNameById(userId); // Llamando al nuevo método
+      String? userName = await Auth().getUserNameById(userId);
 
       setState(() {
         name = userName ?? 'Nombre no encontrado';
       });
     }
   }
+
   Future<void> signOut() async {
     await Auth().signOut();
   }
 
-void _onItemTapped(int index) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       switch (_selectedIndex) {
@@ -57,9 +60,9 @@ void _onItemTapped(int index) {
           break;
         case 1:
           signOut();
+          buildAuth(context);
           break;
         case 2:
-          // Implementar la lógica para mostrar las solicitudes de amistad
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
@@ -72,13 +75,33 @@ void _onItemTapped(int index) {
     });
   }
 
+    @override
+  Widget buildAuth(BuildContext context) {
+    return Scaffold(
+      body: FutureBuilder(
+        future: Auth().isUserAuthenticated(), // Suponiendo que tienes un método para verificar si el usuario está logueado
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.data == true) { // Si el usuario está logueado
+              return _buildUserList(); // Muestra la lista de usuarios
+            } else { // Si el usuario no está logueado
+              return LoginPage(); // Redirige al usuario a la pantalla de inicio de sesión
+            }
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueGrey[600],
         title: Text(
-          'Bienvenido, ${name}',
+          'Bienvenido, $name',
           style: const TextStyle(
             fontWeight: FontWeight.w600,
           ),
@@ -170,4 +193,4 @@ void _onItemTapped(int index) {
       }),
     );
   }
-  }
+}
